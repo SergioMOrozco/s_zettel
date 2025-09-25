@@ -3,14 +3,18 @@ from datetime import datetime
 from pathlib import Path
 #from ops import new_file, new_metdata
 import subprocess
+from wonderwords import RandomWord
 
-def new_file(timestamp, metadata= False):
+r = RandomWord()
 
-    filename = Path(f"{timestamp}.md")
+def new_file(timestamp, note_type):
+
+    random_word = r.word()  # Generates a single random word
+    filename = Path(f"{random_word}_{timestamp}_{note_type}.md")
 
     # Create the file if it doesn't exist
     if not filename.exists():
-        filename.write_text(f"# Unique Title\n")
+        filename.write_text(f"# ({note_type}) Unique Title\n")
         click.echo(f"Created {filename}")
     else:
         click.echo(f"File {filename} already exists.")
@@ -23,12 +27,18 @@ def ztl():
     pass
 
 @ztl.command()
-def new():
+@click.option(
+    '--note_type', '-n',
+    type=click.Choice(['L', 'P', 'H', 'F'], case_sensitive=False),
+    required=True,
+    help="Type of note: L (Literature), P (Permanent), H (Hub), F (Fleeting)"
+)
+def new(note_type):
 
     # Format the filename: "2025-07-05.md"
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    timestamp = datetime.now().strftime("%m-%d-%Y")
 
-    filename = new_file(timestamp)
+    filename = new_file(timestamp, note_type)
 
     # Open the file in Vim
     subprocess.run(["vim", str(filename)])
@@ -44,9 +54,15 @@ def edit(file):
 
 
 @ztl.command()
-def list():
+@click.option(
+    '--note_type', '-n',
+    type=click.Choice(['L', 'P', 'H', 'F'], case_sensitive=False),
+    required=True,
+    help="Type of note: L (Literature), P (Permanent), H (Hub), F (Fleeting)"
+)
+def list(note_type):
 
-    md_files = Path("./").glob("*.md")
+    md_files = Path("./").glob(f"*_{note_type}.md")
 
     for md_file in md_files:
         with open(md_file, "r", encoding="utf-8") as f:
